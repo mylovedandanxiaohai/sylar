@@ -8,6 +8,7 @@
 #include <fstream>
 namespace Mylove
 {
+    class Logger;
     //日志事件
     class LogEvent
     {
@@ -65,6 +66,8 @@ namespace Mylove
             void delAppender(LogAppender::ptr appender);
             LogLevel::Level getLevel() const{return m_level;}
             void setLevel(LogLevel::Level val){m_level=val;}
+
+            const std::string& getName()const {return m_name;}
         private:
             std::string m_name;                             //日志名称
             LogLevel::Level m_level;                        //日志级别
@@ -74,17 +77,17 @@ namespace Mylove
     class LogFormatter//日志的格式
     {
         public:
-        typedef std::shared_ptr<LogFormatter> ptr;
-        LogFormatter(const std::string& pattern);
+            typedef std::shared_ptr<LogFormatter> ptr;
+            LogFormatter(const std::string& pattern);
         //
-        std::string format(LogLevel::Level level,LogEvent::ptr event);
-        privete:
+            std::string format(std::shared_ptr<Logger> logger,LogLevel::Level level,LogEvent::ptr event);
+        public:
             class FormatterItem
             {
                 public:
                     typedef std::shared_ptr<FormatItem> ptr;
                     virtual ~Formatter(){}
-                    virtual void format(std::ostream& os,LogLevel::Level level,LogEvent::ptr event) = 0;
+                    virtual void format(std::ostream& os, std::shared_ptr<Logger> logger, LogLevel::Level level,LogEvent::ptr event) = 0;
              };
 
             void init();
@@ -100,7 +103,7 @@ namespace Mylove
             typedef std::shared_ptr<Appender> pt;
             virtual ~LogFormatter(){}
             
-           virtual void log(LogLevel::Level level,LogEvent::ptr event)=0;
+           virtual void log(std::shared_ptr<Logger> logger,LogLevel::Level level,LogEvent::ptr event)=0;
 
            void setFormatter(LogFormatter::ptr val){m_formatter = val;}
            LogFormatter::ptr getFormatter() const {return m_formatetr;}
