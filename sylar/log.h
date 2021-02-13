@@ -86,6 +86,7 @@ namespace Mylove
             {
                 public:
                     typedef std::shared_ptr<FormatItem> ptr;
+                    FormatterItem(const std::string fmt = ""){};
                     virtual ~Formatter(){}
                     virtual void format(std::ostream& os, std::shared_ptr<Logger> logger, LogLevel::Level level,LogEvent::ptr event) = 0;
              };

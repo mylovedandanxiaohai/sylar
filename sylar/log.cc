@@ -1,4 +1,5 @@
 #include "log.h"
+#include <map>
 
 namespce Mylove
 {
@@ -50,7 +51,7 @@ I   const char* LogLevel::ToString(LogLevel::Level level)
             
     };
 
-    class ElapseFormatItem:public LogFormatter::FormatItem
+    class NameFormatItem:public LogFormatter::FormatItem
     {
     public:
         void format(std::ostream& os ,Logger::ptr logger LogLevel::Level level , LogEvent::ptr event) override{
@@ -101,6 +102,25 @@ I   const char* LogLevel::ToString(LogLevel::Level level)
         void format(std::ostream& os ,Logger::ptr logger LogLevel::Level level , LogEvent::ptr event) override{
             os<< event->getLine();
        }
+    };
+
+    class NewLineFormatItem : public LogFormatter::FormatItem
+    {
+    public:
+        void format(std::ostream& os ,Logger::ptr logger LogLevel::Level level , LogEvent::ptr event) override{
+            os<< std::endl;
+       }
+    };
+
+    class StringFormatItem : public LogFormatter::FormatItem
+    {
+    public:
+        StringFormatItem(const std::string& str):FormatItem(str),m_string(str){}
+        void format(std::ostream& os ,Logger::ptr logger LogLevel::Level level , LogEvent::ptr event) override{
+            os<< m_string;
+       }
+    private:    
+        std::string m_string;
     };
 	
     Logger::Logger(const std::string::ptr& name):m_name(name)
@@ -294,8 +314,42 @@ I   const char* LogLevel::ToString(LogLevel::Level level)
     }
 
 
+        static std::map<std::string , std::function<FormatItem::ptr(const std::string& str)> >s_format_items={
+        #define XX(str ,c)\
+            {str, [](const std::string& fmt){return FormatItem::ptr(new C(fmt));}
 
+            XX(m,MessageFormatItem),
+            XX(p,LevelFormatItem),
+            XX(r,ElapseFormatItem),
+            XX(c,NameFormatItem),
+            XX(t,ThreadIdFormatItem),
+            XX(n,NewLineFormatItem),
+            XX(d,DateTimeFormatItem),
+            XX(f,FilenameFormatItem),
+            XX(l,LineFormatItem),
+        #undef XX
+        };
 
+        for(auto& i :vec)
+        {
+            if(std::get<2>(i) == 0)
+            {
+                m_items.push_back(FormatItem::ptr(new StringFormatItem(std::get<0>(i))));
+            }
+            else
+            {
+                auto it = s_format_items.find(std::get<0>(i));
+                if(it = s_format_items.end())
+                {
+                    m_items.push_back(FormatItem::ptr(new StringFormatItem("error_format %" + std::get<0>(i) + ">>")));
+                }
+                else
+                {
+                    m_items.push_back(it->second(std::get<1>(i)));
+                }
+            }
+            std::cout << std::get<0>(i)<<"-" << std::get<1>(i)<<"-" << std::get<2>(i)<<std::endl;
+        }
 
    std::string LogFormatter::format(LogEvene::ptr event
 
